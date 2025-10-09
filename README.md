@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FashionCorner - Next.js 14 Fullstack Ecommerce App
 
 Features:
@@ -23,3 +24,7 @@ Features:
 <p align="center" width="100%">
   <img src="public/readme/Fashion-Corner-Fullstack-Next-js-Store-dark.webp" alt="Next.js 14 Fullstack Ecommerce App - Home page dark mode" title="screen2" />
 </p>
+=======
+# Velwyn
+This is a Velwyn Project 
+>>>>>>> d8500a2ac53de7a10b6a96677d235af72e228529
