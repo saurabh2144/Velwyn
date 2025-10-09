@@ -30,7 +30,7 @@ const HomePage = () => {
           </h1>
         </div>
         <div className='flex-1 text-lg md:text-xl text-gray-700'>
-          <span className='font-semibold'>Velwyn</span> is a gift & clothes store based in HCMC, Vietnam. Est since 2019.
+         <span className='font-semibold'>Velwyn</span> – Lucknow’s premier destination for stylish, high-quality clothing, curated with love by Rohit. Experience fashion that speaks your style.
         </div>
       </div>
 
