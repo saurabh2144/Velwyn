@@ -132,7 +132,7 @@ export const SearchBox = () => {
           <div className="skeleton h-4 w-12"></div>
         </div>
       )} */}
-      <div></div>
+      
     </form>
   );
 };
