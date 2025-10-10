@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Overlay from './Overlay';
 import Shirts from '../../public/images/categories/Shirts.webp';
 import Pants from '../../public/images/categories/Pants.webp';
-import Sarees from '../../public/images/categories/Sarees.webp'; // New image for Ladies Wear
+import Sarees from '@/public/images/categories/sarees.webp'; // New image for Ladies Wear
 
 const Categories = () => {
   return (
