@@ -8,6 +8,11 @@ import ProductItems, { ProductItemsSkeleton } from '@/components/products/Produc
 import ReadMore from '@/components/readMore/ReadMore';
 import Text from '@/components/readMore/Text';
 import Slider from '@/components/slider/Slider';
+import AutoSlider from '@/components/main/AutoSlider';
+import FeaturedCategories from '@/components/main/FeaturedCategories';
+import NewAndPopular from '@/components/main/NewAndPopular';
+import ShopYourSize from '@/components/main/ShopYourSize';
+import Banner from '@/components/main/Banner';
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME || 'Velwyn',
@@ -33,6 +38,17 @@ const HomePage = () => {
          <span className='font-semibold'>Velwyn</span> – Lucknow’s premier destination for stylish, high-quality clothing, curated with love by Rohit. Experience fashion that speaks your style.
         </div>
       </div>
+
+         <AutoSlider />
+        
+      <NewAndPopular />
+       <Banner/>
+      <ShopYourSize />
+      <FeaturedCategories />
+
+
+
+
 
       {/* Categories */}
       <Categories />
