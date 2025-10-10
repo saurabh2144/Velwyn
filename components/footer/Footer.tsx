@@ -8,7 +8,7 @@ const Footer = () => {
           <div>
             <h3 className="font-playfair text-2xl font-bold mb-4">Velwyn</h3>
             <p className="text-primary-foreground/70 text-sm">
-              Curating timeless pieces for the modern wardrobe since 2024
+              Curating timeless pieces for the modern wardrobe since 2025
             </p>
           </div>
 
@@ -49,7 +49,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 pt-8 text-center text-sm text-primary-foreground/60">
-          <p>&copy; 2024 NOIR. All rights reserved.</p>
+          <p>&copy; 2025 Velwyn. All rights reserved.</p>
         </div>
       </div>
     </footer>
