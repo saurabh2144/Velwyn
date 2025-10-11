@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// Product Type
 export type Product = {
   _id?: string;
   name: string;
@@ -13,10 +14,11 @@ export type Product = {
   rating: number;
   numReviews: number;
   countInStock: number;
-  colors?: [];
-  sizes?: [];
+  colors?: string[];
+  sizes?: string[];
 };
 
+// Product Schema
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -31,10 +33,10 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     isFeatured: { type: Boolean, default: false },
     banner: String,
+    colors: [{ type: String }],
+    sizes: [{ type: String }], // <-- added for available sizes
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
 
 const ProductModel =

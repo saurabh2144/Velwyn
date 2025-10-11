@@ -36,7 +36,7 @@ const ProductItemSkeleton = () => (
 export const ProductItemsSkeleton = ({ qty, name }: { qty: number; name: string }) => (
   <div>
     <h2 className='text-2xl md:text-3xl font-bold mb-6 border-b-2 border-primary w-36'>{name}</h2>
-    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
       {Array.from({ length: qty }).map((_, i) => (
         <ProductItemSkeleton key={i} />
       ))}
