@@ -16,7 +16,7 @@ const Categories = () => {
           src={Shirts}
           alt='Shirts'
           className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105'
-          placeholder='blur'
+          
         />
         <Overlay category='Shirts' />
       </Link>
@@ -29,7 +29,7 @@ const Categories = () => {
           src={Pants}
           alt='Pants'
           className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105'
-          placeholder='blur'
+         
         />
         <Overlay category='Pants' />
       </Link>
@@ -42,7 +42,7 @@ const Categories = () => {
           src={Sarees}
           alt='Sarees'
           className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105'
-          placeholder='blur'
+  
         />
         <Overlay category='Sarees' />
       </Link>

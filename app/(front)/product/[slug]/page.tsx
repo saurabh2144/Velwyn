@@ -48,8 +48,8 @@ const ProductPage = async ({ params }: { params: { slug: string } }) => {
           <Image
             src={product.image}
             alt={product.name}
-            placeholder='blur'
-            blurDataURL={base64}
+        
+        
             width={640}
             height={640}
             sizes='100vw'

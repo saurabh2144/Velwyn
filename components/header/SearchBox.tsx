@@ -65,7 +65,7 @@ export const SearchBox = () => {
           <div className="join-item ml-4 flex-1 relative">
             <input
               className="input input-bordered input-sm w-full pl-10"
-              placeholder="Search products..."
+        
               aria-label="Search"
               value={formQuery}
               name="q"
@@ -108,7 +108,7 @@ export const SearchBox = () => {
         <div className="join-item ml-4 flex-1 relative">
           <input
             className="input input-bordered w-full pl-10"
-            placeholder="Search for products..."
+           
             aria-label="Search"
             value={formQuery}
             name="q"

@@ -28,8 +28,8 @@ const Carousel = async () => {
                   width={1500}
                   height={300}
                   alt={product.name}
-                  blurDataURL={product.banner!}
-                  placeholder='blur'
+               
+              
                   sizes='(max-width: 1500px) 100vw, 1500px'
                   priority
                 />

@@ -148,7 +148,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
             {showCustomCategory && (
               <input
                 type='text'
-                placeholder='Enter custom category'
+                
                 className='input input-bordered w-full max-w-md mt-2'
                 {...register('category', { required: 'Category is required' })}
               />
