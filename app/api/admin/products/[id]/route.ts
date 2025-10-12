@@ -16,6 +16,10 @@ export const GET = auth(async (...args: any) => {
     if (!product) {
       return Response.json({ message: 'product not found' }, { status: 404 });
     }
+
+    // ensure otherImages exists
+    if (!product.otherImages) product.otherImages = [];
+
     return Response.json(product);
   } catch (err: any) {
     return Response.json({ message: err.message || 'Server error' }, { status: 500 });
@@ -42,7 +46,8 @@ export const PUT = auth(async (...args: any) => {
       brand,
       countInStock,
       description,
-      sizes, // <-- sizes array from frontend
+      sizes,       // <-- sizes array
+      otherImages, // <-- new extra field
     } = await req.json();
 
     const product = await ProductModel.findById(params.id);
@@ -58,7 +63,8 @@ export const PUT = auth(async (...args: any) => {
     product.brand = brand;
     product.countInStock = countInStock;
     product.description = description;
-    product.sizes = sizes || []; // <-- save sizes
+    product.sizes = sizes || [];
+    product.otherImages = otherImages || []; // <-- save otherImages
 
     const updatedProduct = await product.save();
     return Response.json(updatedProduct);

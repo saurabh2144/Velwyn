@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ShoppingCart } from 'lucide-react'; // for icon
 
 import useCartService from '@/lib/hooks/useCartStore';
 import { OrderItem } from '@/lib/models/OrderModel';
@@ -19,23 +20,42 @@ const AddToCart = ({ item }: { item: OrderItem }) => {
     increase(item);
   };
 
-  return existItem ? (
-    <div>
-      <button className='btn' type='button' onClick={() => decrease(existItem)}>
-        -
-      </button>
-      <span className='px-2'>{existItem.qty}</span>
-      <button className='btn' type='button' onClick={() => increase(existItem)}>
-        +
-      </button>
-    </div>
-  ) : (
+  if (existItem) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex items-center gap-2 text-green-600 font-medium">
+          <ShoppingCart size={18} />
+          <span>Already in Cart</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            className="btn btn-sm"
+            type="button"
+            onClick={() => decrease(existItem)}
+          >
+            -
+          </button>
+          <span className="text-lg">{existItem.qty}</span>
+          <button
+            className="btn btn-sm"
+            type="button"
+            onClick={() => increase(existItem)}
+          >
+            +
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <button
-      className='btn btn-primary w-full'
-      type='button'
+      className="btn btn-primary w-full"
+      type="button"
       onClick={addToCartHandler}
     >
-      Add to cart
+      Add to Cart
     </button>
   );
 };

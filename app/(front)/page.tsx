@@ -25,7 +25,9 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   return (
     <div className='container mx-auto my-8 flex flex-col gap-12 px-4 md:px-0'>
-     
+      <Suspense fallback={<CarouselSkeleton />}>
+        <Carousel />
+      </Suspense>
 
       <div className='flex flex-col md:flex-row gap-8 items-center'>
         <div className='flex-1'>

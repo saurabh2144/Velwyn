@@ -30,12 +30,11 @@ export const GET = async (request: NextRequest) => {
     const totalCategories = await ProductModel.distinct('category');
     const totalCount = totalCategories.length;
 
-    // Format response
-    const formattedCategories = categories.map(cat => ({
-      name: cat._id,
-      count: `${cat.productCount}+ items`,
-      image: cat.image
-    }));
+ const formattedCategories = categories.map(cat => ({
+  name: cat._id,
+  count: `${cat.productCount}+ items`,
+  image: cat.image || (cat.otherImages?.[0] || null)
+}));
 
     return NextResponse.json({
       categories: formattedCategories,

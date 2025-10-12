@@ -5,7 +5,8 @@ export type Product = {
   _id?: string;
   name: string;
   slug: string;
-  image: string;
+  image: string; // primary image
+  otherImages?: string[]; // new field
   banner?: string;
   price: number;
   brand: string;
@@ -24,7 +25,8 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     category: { type: String, required: true },
-    image: { type: String, required: true },
+    image: { type: String, required: true }, // primary image
+    otherImages: [{ type: String }], // new field for extra images
     price: { type: Number, required: true },
     brand: { type: String, required: true },
     rating: { type: Number, required: true, default: 0 },
@@ -34,7 +36,7 @@ const productSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     banner: String,
     colors: [{ type: String }],
-    sizes: [{ type: String }], // <-- added for available sizes
+    sizes: [{ type: String }],
   },
   { timestamps: true }
 );
