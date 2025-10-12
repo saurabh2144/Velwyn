@@ -9,33 +9,39 @@ const ReadMore = ({ children }: { children: React.ReactNode }) => {
   const [isMore, setIsMore] = useState(false);
 
   return (
-    <div className='mb-10 py-5 md:py-10'>
+    <div className='mb-10 py-5 w-full md:py-10'>
       <div
         className={cn(
-          `relative mx-auto w-full overflow-hidden ${isMore ? 'h-full' : 'h-[400px]'}`,
+          `relative mx-auto w-full overflow-hidden`,
+          isMore ? 'max-h-none' : 'max-h-[120px] line-clamp-5'
         )}
       >
+        {children}
+        
         {!isMore && (
-          <div className='absolute bottom-0 flex h-2/3 w-full items-center bg-gradient-to-b from-transparent to-base-100'>
+          <div className='absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-b from-transparent to-base-100 flex items-end justify-center pb-2'>
             <button
               onClick={() => setIsMore(true)}
-              className='btn mx-auto mt-2 self-end'
+              className='btn btn-sm flex items-center gap-1'
             >
               Read More
-              <ChevronDown />
+              <ChevronDown size={16} />
             </button>
           </div>
         )}
-        {children}
-        <div className='flex items-center'>
-          {isMore && (
-            <button onClick={() => setIsMore(false)} className='btn mx-auto'>
-              Hide
-              <ChevronUp />
-            </button>
-          )}
-        </div>
       </div>
+      
+      {isMore && (
+        <div className='flex justify-center mt-4'>
+          <button 
+            onClick={() => setIsMore(false)} 
+            className='btn btn-sm flex items-center gap-1'
+          >
+            Show Less
+            <ChevronUp size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
