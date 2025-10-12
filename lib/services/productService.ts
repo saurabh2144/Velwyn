@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import dbConnect from '@/lib/dbConnect';
 import ProductModel, { Product } from '@/lib/models/ProductModel';
+import { convertDocToObj } from '@/lib/utils';
 
 export const revalidate = 3600;
 
@@ -45,7 +46,7 @@ const getBySlug = cache(async (slug: string) => {
   return toProduct(product);
 });
 
-// ✅ Get products by query (now includes size filter)
+// ✅ Get products by query (with size support)
 const getByQuery = cache(
   async ({
     q,
@@ -53,7 +54,7 @@ const getByQuery = cache(
     sort,
     price,
     rating,
-    size,        // <-- NEW: add size param
+    size,
     page = '1',
     limit = 10,
   }: {
@@ -62,47 +63,35 @@ const getByQuery = cache(
     price: string;
     rating: string;
     sort: string;
-    size?: string; // <-- NEW
+    size?: string;
     page: string;
     limit?: number;
   }) => {
     await dbConnect();
 
-    console.log('Received params:', { category, size, page, limit });
-
-    // Build filter object
     const filter: any = {};
 
-    // Text search filter
     if (q && q !== 'all') {
       filter.name = { $regex: q, $options: 'i' };
     }
 
-    // Category filter
     if (category && category !== 'all') {
       filter.category = category;
     }
 
-    // Rating filter
     if (rating && rating !== 'all') {
       filter.rating = { $gte: Number(rating) };
     }
 
-    // Price filter
     if (price && price !== 'all') {
       const [minPrice, maxPrice] = price.split('-').map(Number);
       filter.price = { $gte: minPrice, $lte: maxPrice };
     }
 
-    // ✅ Size filter (new)
     if (size && size !== 'all') {
-      // Match products that contain this size in the "sizes" array
       filter.sizes = { $in: [size] };
     }
 
-    console.log('Final filter:', filter);
-
-    // Sort order
     const order: Record<string, 1 | -1> =
       sort === 'lowest'
         ? { price: 1 }
@@ -112,24 +101,18 @@ const getByQuery = cache(
         ? { rating: -1 }
         : { _id: -1 };
 
-    // Distinct categories and sizes for filters
     const categories = await ProductModel.find().distinct('category');
-    const sizesList = await ProductModel.find().distinct('sizes'); // <-- NEW
+    const sizesList = await ProductModel.find().distinct('sizes');
 
-    // Pagination setup
     const skip = limit * (Number(page) - 1);
 
-    // Get filtered products
     const products = await ProductModel.find(filter, '-reviews')
       .sort(order)
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Get total count
     const countProducts = await ProductModel.countDocuments(filter);
-
-    console.log(`Found ${products.length} products out of ${countProducts} total`);
 
     return {
       products: toProducts(products),
@@ -137,7 +120,7 @@ const getByQuery = cache(
       page: Number(page),
       pages: Math.ceil(countProducts / limit),
       categories,
-      sizes: sizesList, // <-- return distinct sizes too
+      sizes: sizesList,
     };
   }
 );
@@ -169,6 +152,122 @@ const getByCategory = cache(async (category: string, limit = 10, page = 1) => {
   };
 });
 
+
+// --------------------------------------------------------------------
+// ✅ Additional Filtered Products Service (for advanced search UI)
+// --------------------------------------------------------------------
+
+export interface ProductFilters {
+  category?: string;
+  size?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  rating?: number;
+  searchQuery?: string;
+  sortBy?: string;
+}
+
+export interface FilteredProductsResponse {
+  products: Product[];
+  totalProducts: number;
+  categories: string[];
+  sizes: string[];
+  priceRange: {
+    min: number;
+    max: number;
+  };
+}
+
+const getProductsWithFilters = async (
+  filters: ProductFilters
+): Promise<FilteredProductsResponse> => {
+  try {
+    await dbConnect();
+
+    const query: any = {};
+
+    if (filters.category) query.category = filters.category;
+    if (filters.size) query.sizes = { $in: [filters.size] };
+
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      query.price = {};
+      if (filters.minPrice !== undefined) query.price.$gte = filters.minPrice;
+      if (filters.maxPrice !== undefined) query.price.$lte = filters.maxPrice;
+    }
+
+    if (filters.rating !== undefined) {
+      query.rating = { $gte: filters.rating };
+    }
+
+    if (filters.searchQuery) {
+      query.$or = [
+        { name: { $regex: filters.searchQuery, $options: 'i' } },
+        { description: { $regex: filters.searchQuery, $options: 'i' } },
+        { brand: { $regex: filters.searchQuery, $options: 'i' } },
+      ];
+    }
+
+    let sort: any = {};
+    switch (filters.sortBy) {
+      case 'price_asc':
+        sort.price = 1;
+        break;
+      case 'price_desc':
+        sort.price = -1;
+        break;
+      case 'rating':
+        sort.rating = -1;
+        break;
+      case 'newest':
+      default:
+        sort.createdAt = -1;
+    }
+
+    const products = await ProductModel.find(query)
+      .sort(sort)
+      .limit(48)
+      .lean();
+
+    const categories = await ProductModel.distinct('category');
+    const sizes = await ProductModel.distinct('sizes');
+
+    const priceStats = await ProductModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+    ]);
+
+    return {
+      products: products.map(convertDocToObj),
+      totalProducts: await ProductModel.countDocuments(query),
+      categories,
+      sizes,
+      priceRange: {
+        min: priceStats[0]?.minPrice || 0,
+        max: priceStats[0]?.maxPrice || 0,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getProductsWithFilters:', error);
+    return {
+      products: [],
+      totalProducts: 0,
+      categories: [],
+      sizes: [],
+      priceRange: { min: 0, max: 0 },
+    };
+  }
+};
+
+
+// --------------------------------------------------------------------
+// ✅ Final Export
+// --------------------------------------------------------------------
+
 const productService = {
   getLatest,
   getFeatured,
@@ -177,6 +276,7 @@ const productService = {
   getCategories,
   getTopRated,
   getByCategory,
+  getProductsWithFilters, // <-- added here
 };
 
 export default productService;

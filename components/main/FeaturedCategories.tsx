@@ -1,32 +1,87 @@
 // components/FeaturedCategories.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+
+type Category = {
+  name: string;
+  count: string;
+  image: string;
+};
 
 const FeaturedCategories = () => {
-  const categories = [
-    { name: 'T-shirts', count: '150+ items' },
-    { name: 'Shirts', count: '120+ items' },
-    { name: 'Joggers', count: '80+ items' },
-    { name: 'Shorts', count: '60+ items' },
-    { name: 'Trousers', count: '90+ items' },
-    { name: 'Sweatshirts & Hoodies', count: '70+ items' },
-    { name: 'Sweaters', count: '50+ items' },
-    { name: 'Bags', count: '40+ items' },
-    { name: 'Accessories', count: '30+ items' },
-    { name: 'Belts', count: '25+ items' },
-    { name: 'Blazers', count: '35+ items' },
-    { name: 'Boxers', count: '45+ items' },
-    { name: 'Cargo Pants', count: '55+ items' },
-    { name: 'Chinos', count: '65+ items' },
-    { name: 'Co-ords', count: '20+ items' },
-    { name: 'Hoodies', count: '75+ items' },
-    { name: 'Jackets', count: '40+ items' },
-    { name: 'Jeans', count: '85+ items' },
-    { name: 'Night Suit & Pyjamas', count: '15+ items' },
-    { name: 'Overshirt', count: '25+ items' },
-    { name: 'Perfumes', count: '20+ items' },
-    { name: 'Shoes', count: '60+ items' },
-    { name: 'Sunglasses', count: '35+ items' },
-  ];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const fetchCategories = async (page: number = 1, append: boolean = false) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/categories/all?page=${page}&limit=20`);
+      const data = await res.json();
+
+      if (append) {
+        setCategories(prev => [...prev, ...data.categories]);
+      } else {
+        setCategories(data.categories);
+      }
+      
+      setHasMore(data.hasMore);
+      setCurrentPage(data.currentPage);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoading(false);
+      setInitialLoad(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories(1, false);
+  }, []);
+
+  const handleShowMore = () => {
+    if (hasMore && !loading) {
+      fetchCategories(currentPage + 1, true);
+    }
+  };
+
+//  const handleCategoryClick = (categoryName: string) => {
+//   const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
+//   window.location.href = `/search?category=${slug}`;
+// };
+
+const handleCategoryClick = (categoryName: string) => {
+  // Send exact category name as it appears in DB
+  const encodedCategory = encodeURIComponent(categoryName);
+  window.location.href = `/search?category=${encodedCategory}`;
+};
+
+
+  if (initialLoad) {
+    return (
+      <div className="bg-white py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            TOP CATEGORIES
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 20 }).map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white py-8">
@@ -39,23 +94,47 @@ const FeaturedCategories = () => {
           {categories.map((category, index) => (
             <div
               key={index}
-              className="group cursor-pointer p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+              onClick={() => handleCategoryClick(category.name)}
+              className="group cursor-pointer p-4 rounded-lg hover:bg-gray-50 transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:shadow-md"
             >
-              <div className="aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-xs font-medium">
-                    {category.name.split(' ')[0].charAt(0)}
-                  </span>
-                </div>
+              <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                {category.image ? (
+                  <Image 
+                    src={category.image} 
+                    alt={category.name}
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 text-sm font-medium">
+                      {category.name.split(' ')[0].charAt(0)}
+                    </span>
+                  </div>
+                )}
               </div>
               
-              <h3 className="font-medium text-gray-900 text-sm mb-1 group-hover:text-blue-600">
+              <h3 className="font-medium text-gray-900 text-sm mb-1 group-hover:text-blue-600 line-clamp-2">
                 {category.name}
               </h3>
               <p className="text-xs text-gray-500">{category.count}</p>
             </div>
           ))}
         </div>
+
+        {/* Show More Button */}
+        {hasMore && (
+          <div className="text-center mt-8">
+            <button
+              onClick={handleShowMore}
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Loading...' : 'Show More Categories'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
