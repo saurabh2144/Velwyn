@@ -4,6 +4,7 @@ import Overlay from './Overlay';
 import Shirts from '../../public/images/categories/Shirts.webp';
 import Pants from '../../public/images/categories/Pants.webp';
 import Sarees from '@/public/images/categories/sarees.webp'; // New image for Ladies Wear
+import kurtis from '@/public/images/categories/kurtis.webp'; // New image for Ladies Wear
 
 const Categories = () => {
   return (
@@ -45,6 +46,18 @@ const Categories = () => {
   
         />
         <Overlay category='Sarees' />
+      </Link>
+      <Link
+        href='/search?category=Sarees'
+        className='group relative overflow-hidden sm:hidden rounded-xl'
+      >
+        <Image
+          src={kurtis}
+          alt='kurtis'
+          className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-105'
+  
+        />
+        <Overlay category='kurtis' />
       </Link>
     </div>
   );

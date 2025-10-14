@@ -74,11 +74,24 @@ const NewAndPopular = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {displayedProducts.map(product => (
-            <ProductItem key={product.id} product={product} />
-          ))}
-        </div>
+       <div>
+  {/* Mobile (horizontal scroll) */}
+  <div className="flex overflow-x-auto gap-4 sm:hidden scrollbar-hide">
+    {displayedProducts.map((product) => (
+      <div key={product.id} className="flex-none w-64">
+        <ProductItem product={product} />
+      </div>
+    ))}
+  </div>
+
+  {/* Desktop (normal grid) */}
+  <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+    {displayedProducts.map((product) => (
+      <ProductItem key={product.id} product={product} />
+    ))}
+  </div>
+</div>
+
 
         {hasMore && (
           <div className="text-center mt-8">

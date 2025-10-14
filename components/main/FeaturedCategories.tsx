@@ -1,9 +1,7 @@
-// components/FeaturedCategories.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 
 type Category = {
   name: string;
@@ -12,26 +10,40 @@ type Category = {
 };
 
 const FeaturedCategories = () => {
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [displayCount, setDisplayCount] = useState(0);
+  const [increment, setIncrement] = useState(6); // default mobile
 
-  const fetchCategories = async (page: number = 1, append: boolean = false) => {
+  // Decide increment based on screen size
+  const updateIncrement = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1024) {
+        setIncrement(20); // desktop
+      } else {
+        setIncrement(6); // mobile
+      }
+    }
+  };
+
+  useEffect(() => {
+    updateIncrement();
+    window.addEventListener('resize', updateIncrement);
+    return () => window.removeEventListener('resize', updateIncrement);
+  }, []);
+
+  const fetchCategories = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/categories/all?page=${page}&limit=20`);
+      const res = await fetch(`/api/categories/all?page=1&limit=100`);
       const data = await res.json();
+      setAllCategories(data.categories);
 
-      if (append) {
-        setCategories(prev => [...prev, ...data.categories]);
-      } else {
-        setCategories(data.categories);
-      }
-      
-      setHasMore(data.hasMore);
-      setCurrentPage(data.currentPage);
+      // Initially show mobile/desktop number
+      setDisplayCount(Math.min(increment, data.categories.length));
+      setCategories(data.categories.slice(0, increment));
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     } finally {
@@ -41,26 +53,19 @@ const FeaturedCategories = () => {
   };
 
   useEffect(() => {
-    fetchCategories(1, false);
-  }, []);
+    fetchCategories();
+  }, [increment]);
 
   const handleShowMore = () => {
-    if (hasMore && !loading) {
-      fetchCategories(currentPage + 1, true);
-    }
+    const nextCount = Math.min(displayCount + increment, allCategories.length);
+    setCategories(allCategories.slice(0, nextCount));
+    setDisplayCount(nextCount);
   };
 
-//  const handleCategoryClick = (categoryName: string) => {
-//   const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
-//   window.location.href = `/search?category=${slug}`;
-// };
-
-const handleCategoryClick = (categoryName: string) => {
-  // Send exact category name as it appears in DB
-  const encodedCategory = encodeURIComponent(categoryName);
-  window.location.href = `/search?category=${encodedCategory}`;
-};
-
+  const handleCategoryClick = (categoryName: string) => {
+    const encodedCategory = encodeURIComponent(categoryName);
+    window.location.href = `/search?category=${encodedCategory}`;
+  };
 
   if (initialLoad) {
     return (
@@ -70,7 +75,7 @@ const handleCategoryClick = (categoryName: string) => {
             TOP CATEGORIES
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {Array.from({ length: 20 }).map((_, index) => (
+            {Array.from({ length: increment }).map((_, index) => (
               <div key={index} className="animate-pulse">
                 <div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
                 <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -89,7 +94,7 @@ const handleCategoryClick = (categoryName: string) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           TOP CATEGORIES
         </h2>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {categories.map((category, index) => (
             <div
@@ -99,8 +104,8 @@ const handleCategoryClick = (categoryName: string) => {
             >
               <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                 {category.image ? (
-                  <Image 
-                    src={category.image} 
+                  <Image
+                    src={category.image}
                     alt={category.name}
                     width={80}
                     height={80}
@@ -114,7 +119,7 @@ const handleCategoryClick = (categoryName: string) => {
                   </div>
                 )}
               </div>
-              
+
               <h3 className="font-medium text-gray-900 text-sm mb-1 group-hover:text-blue-600 line-clamp-2">
                 {category.name}
               </h3>
@@ -124,7 +129,7 @@ const handleCategoryClick = (categoryName: string) => {
         </div>
 
         {/* Show More Button */}
-        {hasMore && (
+        {displayCount < allCategories.length && (
           <div className="text-center mt-8">
             <button
               onClick={handleShowMore}
