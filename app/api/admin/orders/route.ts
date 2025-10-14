@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
-import OrderModel from '@/lib/models/OrderModel';
+import OrderModel from '@/lib/models/orderFinalModel';
 
 export const GET = auth(async (req: any) => {
   if (!req.auth || !req.auth.user?.isAdmin) {

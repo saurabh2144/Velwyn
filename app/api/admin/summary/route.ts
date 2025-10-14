@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
-import OrderModel from '@/lib/models/OrderModel';
+import orderFinalModel from '@/lib/models/orderFinalModel';
+import OrderModel from '@/lib/models/orderFinalModel';
 import ProductModel from '@/lib/models/ProductModel';
 import UserModel from '@/lib/models/UserModel';
 
@@ -39,7 +40,7 @@ export const GET = auth(async (...request: any) => {
     { $sort: { _id: 1 } },
   ]);
 
-  const productsData = await ProductModel.aggregate([
+  const productsData = await orderFinalModel.aggregate([
     {
       $group: {
         _id: '$category',

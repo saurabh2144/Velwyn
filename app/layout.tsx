@@ -8,6 +8,8 @@ import Footer from '@/components/footer/Footer';
 import Header from '@/components/header/Header';
 import Providers from '@/components/Providers';
 import Sidebar from '@/components/Sidebar';
+import Script from 'next/script';
+
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -27,6 +29,11 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
               <div className='flex min-h-screen flex-col'>
                 <Header />
                 {children}
+                  
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
                 <Analytics/>
                 <SpeedInsights/>
                 <Footer />
