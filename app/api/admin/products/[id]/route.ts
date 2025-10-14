@@ -46,8 +46,10 @@ export const PUT = auth(async (...args: any) => {
       brand,
       countInStock,
       description,
-      sizes,       // <-- sizes array
-      otherImages, // <-- new extra field
+      sizes,        // ✅ sizes array
+      colors,       // ✅ add colors here
+      otherImages,  // ✅ other images
+      isFeatured,   // optional
     } = await req.json();
 
     const product = await ProductModel.findById(params.id);
@@ -55,6 +57,7 @@ export const PUT = auth(async (...args: any) => {
       return Response.json({ message: 'Product not found' }, { status: 404 });
     }
 
+    // ✅ update all fields
     product.name = name;
     product.slug = slug;
     product.price = price;
@@ -64,7 +67,9 @@ export const PUT = auth(async (...args: any) => {
     product.countInStock = countInStock;
     product.description = description;
     product.sizes = sizes || [];
-    product.otherImages = otherImages || []; // <-- save otherImages
+    product.colors = colors || [];        // ✅ THIS WAS MISSING
+    product.otherImages = otherImages || [];
+    product.isFeatured = isFeatured ?? product.isFeatured;
 
     const updatedProduct = await product.save();
     return Response.json(updatedProduct);
@@ -72,6 +77,7 @@ export const PUT = auth(async (...args: any) => {
     return Response.json({ message: err.message || 'Server error' }, { status: 500 });
   }
 }) as any;
+
 
 // DELETE product
 export const DELETE = auth(async (...args: any) => {

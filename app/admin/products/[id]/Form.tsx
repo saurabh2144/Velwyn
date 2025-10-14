@@ -233,8 +233,11 @@ export default function ProductEditForm({ productId }: { productId: string }) {
                   onChange={(e) => {
                     const checked = e.target.checked;
                     const currentSizes = watchedSizes || [];
-                    if (checked) setValue('sizes', [...currentSizes, size]);
-                    else setValue('sizes', currentSizes.filter((s) => s !== size));
+                    if (checked) {
+                      setValue('sizes', [...currentSizes, size], { shouldValidate: true, shouldDirty: true });
+                    } else {
+                      setValue('sizes', currentSizes.filter((s) => s !== size), { shouldValidate: true, shouldDirty: true });
+                    }
                   }}
                   className='checkbox'
                 />
@@ -258,8 +261,11 @@ export default function ProductEditForm({ productId }: { productId: string }) {
                   onChange={(e) => {
                     const checked = e.target.checked;
                     const currentColors = watchedColors || [];
-                    if (checked) setValue('colors', [...currentColors, color]);
-                    else setValue('colors', currentColors.filter((c) => c !== color));
+                    if (checked) {
+                      setValue('colors', [...currentColors, color], { shouldValidate: true, shouldDirty: true });
+                    } else {
+                      setValue('colors', currentColors.filter((c) => c !== color), { shouldValidate: true, shouldDirty: true });
+                    }
                   }}
                   className='checkbox'
                 />

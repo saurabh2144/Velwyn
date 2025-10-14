@@ -2,8 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrderFinal extends Document {
   userId?: {
-    email  :string,
-    name: string
+    email: string;
+    name: string;
   };
   paymentMethod: string;
   shippingAddress: {
@@ -27,18 +27,22 @@ export interface IOrderFinal extends Document {
   shippingPrice: number;
   totalPrice: number;
   paid: boolean;
+  paidAt?: Date | null;
+  isDelivered?: boolean;
+  deliveredAt?: Date | null;
   paymentId?: string | null;
   paymentAmount?: number | null;
   paymentDate?: Date | null;
   paymentFrom?: string | null;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const orderFinalSchema = new Schema<IOrderFinal>(
   {
-    userId : {
-      email : { type: String},
-      name : { type: String}
+    userId: {
+      email: { type: String },
+      name: { type: String },
     },
     paymentMethod: { type: String, required: true },
     shippingAddress: {
@@ -64,6 +68,9 @@ const orderFinalSchema = new Schema<IOrderFinal>(
     shippingPrice: Number,
     totalPrice: Number,
     paid: { type: Boolean, default: false },
+    paidAt: { type: Date, default: null },
+    isDelivered: { type: Boolean, default: false },
+    deliveredAt: { type: Date, default: null },
     paymentId: { type: String, default: null },
     paymentAmount: { type: Number, default: null },
     paymentDate: { type: Date, default: null },
