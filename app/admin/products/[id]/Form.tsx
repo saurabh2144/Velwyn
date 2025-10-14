@@ -32,10 +32,11 @@ export default function ProductEditForm({ productId }: { productId: string }) {
     }
   );
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = 
-    useForm<Product & { sizes: string[]; otherImages?: string[] }>();
+  const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } =
+    useForm<Product & { sizes: string[]; colors: string[]; otherImages?: string[] }>();
 
   const watchedSizes = watch('sizes') || [];
+  const watchedColors = watch('colors') || [];
   const watchedOtherImages = watch('otherImages') || [];
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
     setValue('countInStock', product.countInStock);
     setValue('description', product.description);
     setValue('sizes', product.sizes || []);
+    setValue('colors', product.colors || []);
     setValue('otherImages', product.otherImages || []);
 
     setShowCustomCategory(
@@ -62,6 +64,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
   const formSubmit = async (formData: any) => {
     if (!formData.image) return toast.error('Please upload a primary image before submitting');
     if (!formData.sizes || formData.sizes.length === 0) return toast.error('Please select at least one size');
+    if (!formData.colors || formData.colors.length === 0) return toast.error('Please select at least one color');
     await updateProduct(formData);
   };
 
@@ -143,6 +146,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
   if (!product) return 'Loading...';
 
   const sizesOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const colorsOptions = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White', 'Orange', 'Pink', 'Purple'];
 
   return (
     <div>
@@ -196,7 +200,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
             >
               {[
                 'SHIRTS', 'T-SHIRTS', 'TROUSERS', 'JEANS',
-                'JACKETS', 'SWEATERS', 'HOODIES', 'SHORTS', 'Lehenga','Others'
+                'JACKETS', 'SWEATERS', 'HOODIES', 'SHORTS', 'Lehenga', 'Others'
               ].map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
@@ -239,6 +243,31 @@ export default function ProductEditForm({ productId }: { productId: string }) {
             ))}
           </div>
           {errors.sizes && <p className='text-error mt-1'>Please select at least one size</p>}
+        </div>
+
+        {/* Colors Multi Checkbox */}
+        <div className='mb-6 md:flex'>
+          <label className='label md:w-1/5'>Available Colors</label>
+          <div className='md:w-4/5 flex flex-wrap gap-2'>
+            {colorsOptions.map((color) => (
+              <label key={color} className='flex items-center gap-1'>
+                <input
+                  type='checkbox'
+                  value={color}
+                  checked={watchedColors.includes(color)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const currentColors = watchedColors || [];
+                    if (checked) setValue('colors', [...currentColors, color]);
+                    else setValue('colors', currentColors.filter((c) => c !== color));
+                  }}
+                  className='checkbox'
+                />
+                {color}
+              </label>
+            ))}
+          </div>
+          {errors.colors && <p className='text-error mt-1'>Please select at least one color</p>}
         </div>
 
         <button type='submit' disabled={isUpdating || !getValues('image')} className='btn btn-primary'>
