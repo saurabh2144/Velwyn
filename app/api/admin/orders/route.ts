@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
-import OrderModel from '@/lib/models/orderFinalModel';
+import orderFinalModel from '@/lib/models/orderFinalModel';
 
 export const GET = auth(async (req: any) => {
   if (!req.auth || !req.auth.user?.isAdmin) {
@@ -12,7 +12,7 @@ export const GET = auth(async (req: any) => {
     );
   }
   await dbConnect();
-  const orders = await OrderModel.find()
+  const orders = await orderFinalModel.find()
     .sort({ createdAt: -1 })
     // get the name of user
     .populate('user', 'name');

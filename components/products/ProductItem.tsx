@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { Product } from '@/lib/models/ProductModel';
-import { OrderItem } from '@/lib/models/OrderModel';
+import { OrderItem } from '@/lib/models/orderFinalModel';
 import useCartService from '@/lib/hooks/useCartStore';
 import { Rating } from './Rating';
 import { motion, AnimatePresence } from 'framer-motion';

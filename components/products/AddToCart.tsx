@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { ShoppingCart } from 'lucide-react'; // for icon
 
 import useCartService from '@/lib/hooks/useCartStore';
-import { OrderItem } from '@/lib/models/OrderModel';
+import { OrderItem } from '@/lib/models/orderFinalModel';
 
 const AddToCart = ({ item }: { item: OrderItem }) => {
   const router = useRouter();

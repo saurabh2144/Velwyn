@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import orderFinalModel from '@/lib/models/orderFinalModel';
-import OrderModel from '@/lib/models/orderFinalModel';
+import orderFinalModel from '@/lib/models/orderFinalModel';
 import ProductModel from '@/lib/models/ProductModel';
 import UserModel from '@/lib/models/UserModel';
 
@@ -12,11 +12,11 @@ export const GET = auth(async (...request: any) => {
   }
   await dbConnect();
 
-  const ordersCount = await OrderModel.countDocuments();
+  const ordersCount = await orderFinalModel.countDocuments();
   const productsCount = await ProductModel.countDocuments();
   const usersCount = await UserModel.countDocuments();
 
-  const ordersPriceGroup = await OrderModel.aggregate([
+  const ordersPriceGroup = await orderFinalModel.aggregate([
     {
       $group: {
         _id: null,
@@ -29,7 +29,7 @@ export const GET = auth(async (...request: any) => {
   const ordersPrice =
     ordersPriceGroup.length > 0 ? ordersPriceGroup[0].sales : 0;
 
-  const salesData = await OrderModel.aggregate([
+  const salesData = await orderFinalModel.aggregate([
     {
       $group: {
         _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },

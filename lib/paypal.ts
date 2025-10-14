@@ -1,6 +1,6 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import OrderModel from './models/OrderModel';
+import orderFinalModel from './models/orderFinalModel';
 import dbConnect from './dbConnect';
 
 const razorpay = new Razorpay({
@@ -37,7 +37,7 @@ export const verifyRazorpayPayment = async (razorpayOrderId: string, razorpayPay
   }
 
   // Update order in DB
-  const order = await OrderModel.findOne({ _id: razorpayOrderId });
+  const order = await orderFinalModel.findOne({ _id: razorpayOrderId });
   if (!order) throw new Error('Order not found');
 
   order.isPaid = true;

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OrderItem, ShippingAddress } from '../models/OrderModel';
+import { OrderItem, ShippingAddress } from '../models/orderFinalModel';
 import { round2 } from '../utils';
 
 type Cart = {
