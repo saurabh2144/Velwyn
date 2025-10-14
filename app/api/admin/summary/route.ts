@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import orderFinalModel from '@/lib/models/orderFinalModel';
-import orderFinalModel from '@/lib/models/orderFinalModel';
+
 import ProductModel from '@/lib/models/ProductModel';
 import UserModel from '@/lib/models/UserModel';
 
