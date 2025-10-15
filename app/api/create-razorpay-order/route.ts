@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     });
 
     const options = {
-      amount: amount * 100, // convert to paise
+      amount: Math.round(amount * 100), // convert to paise
       currency: 'INR',
       receipt: `receipt_order_${Date.now()}`,
       payment_capture: true,
