@@ -83,6 +83,26 @@ export default function ProductEditForm({ productId }: { productId: string }) {
     </div>
   );
 
+  // Helper function for ImageKit upload
+  const uploadFileToImageKit = async (file: File) => {
+    const resSign = await fetch('/api/imagekit-sign', { method: 'POST' });
+    const { token, expire, signature } = await resSign.json();
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name); // mandatory!
+    formData.append('token', token);
+    formData.append('expire', expire);
+    formData.append('signature', signature);
+    formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
+
+    const res = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!data.url) throw new Error('Upload failed');
+
+    return data.url;
+  };
+
   // Primary Image Upload Handler
   const uploadHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const toastId = toast.loading('Uploading primary image...');
@@ -90,21 +110,8 @@ export default function ProductEditForm({ productId }: { productId: string }) {
       const file = e.target.files?.[0] as File;
       if (!file) return toast.error('No file selected', { id: toastId });
 
-      const resSign = await fetch('/api/cloudinary-sign', { method: 'POST' });
-      const { signature, timestamp } = await resSign.json();
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('signature', signature);
-      formData.append('timestamp', timestamp);
-      formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!);
-
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!data.secure_url) throw new Error('Upload failed, no URL returned');
-
-      setValue('image', data.secure_url, { shouldValidate: true });
+      const url = await uploadFileToImageKit(file);
+      setValue('image', url, { shouldValidate: true });
       toast.success('Primary image uploaded', { id: toastId });
     } catch (err: any) {
       toast.error(err.message || 'Upload failed', { id: toastId });
@@ -119,20 +126,8 @@ export default function ProductEditForm({ productId }: { productId: string }) {
       const uploadedUrls: string[] = [];
 
       for (const file of files) {
-        const resSign = await fetch('/api/cloudinary-sign', { method: 'POST' });
-        const { signature, timestamp } = await resSign.json();
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('signature', signature);
-        formData.append('timestamp', timestamp);
-        formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!);
-
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, { method: 'POST', body: formData });
-        const data = await res.json();
-        if (!data.secure_url) throw new Error('Upload failed');
-        uploadedUrls.push(data.secure_url);
+        const url = await uploadFileToImageKit(file);
+        uploadedUrls.push(url);
       }
 
       setValue('otherImages', [...watchedOtherImages, ...uploadedUrls], { shouldValidate: true });
@@ -198,10 +193,7 @@ export default function ProductEditForm({ productId }: { productId: string }) {
               {...register('category', { required: 'Category is required' })}
               onChange={(e) => setShowCustomCategory(e.target.value === 'Others')}
             >
-              {[
-                'SHIRTS', 'T-SHIRTS', 'TROUSERS', 'JEANS',
-                'JACKETS', 'SWEATERS', 'HOODIES', 'SHORTS', 'Lehenga', 'Others'
-              ].map((cat) => (
+              {[ 'SHIRTS', 'T-SHIRTS', 'TROUSERS', 'JEANS', 'JACKETS', 'SWEATERS', 'HOODIES', 'SHORTS', 'Lehenga', 'Others' ].map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
