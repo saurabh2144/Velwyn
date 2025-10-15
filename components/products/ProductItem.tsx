@@ -3,11 +3,21 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { Product } from '@/lib/models/ProductModel';
-import { orderFinalModel } from '@/lib/models/orderFinalModel';
 import useCartService from '@/lib/hooks/useCartStore';
 import { Rating } from './Rating';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+
+// Define a type for items that go into cart
+export type CartItem = {
+  slug: string;
+  name: string;
+  image: string;
+  price: number;
+  qty: number;
+  size: string;
+  color?: string;
+};
 
 const ProductItem = ({ product }: { product: Product }) => {
   const { items, increase } = useCartService();
@@ -30,10 +40,9 @@ const ProductItem = ({ product }: { product: Product }) => {
     );
 
     if (existItem) {
-      // Item already in cart -> show popup
       setShowAlready(true);
     } else {
-      const newItem: orderFinalModel = {
+      const newItem: CartItem = {
         slug: product.slug,
         name: product.name,
         image: product.image,
@@ -43,10 +52,8 @@ const ProductItem = ({ product }: { product: Product }) => {
         color: selectedColor,
       };
       increase(newItem);
-
-      // Show animation feedback
       setShowAdded(true);
-      setTimeout(() => setShowAdded(false), 1000); // hide after 1 sec
+      setTimeout(() => setShowAdded(false), 1000);
     }
   };
 
@@ -62,7 +69,6 @@ const ProductItem = ({ product }: { product: Product }) => {
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
 
-          {/* Quick Add Button */}
           <button 
             className="absolute bottom-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white px-4 py-2 rounded-full text-sm font-medium shadow-lg hover:bg-gray-50"
             onClick={handleQuickAdd}
@@ -70,7 +76,6 @@ const ProductItem = ({ product }: { product: Product }) => {
             Quick Add +
           </button>
 
-          {/* Added Animation */}
           <AnimatePresence>
             {showAdded && (
               <motion.div
@@ -85,13 +90,11 @@ const ProductItem = ({ product }: { product: Product }) => {
           </AnimatePresence>
         </div>
 
-        {/* Product Info */}
         <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">{product.name}</h3>
         <p className="text-lg font-bold text-gray-900">₹{product.price}</p>
         <p className='line-clamp-1 text-sm text-gray-600'>{product.brand}</p>
         <Rating value={product.rating} caption={''} />
 
-        {/* Sizes */}
         <div className="mt-2 flex items-center space-x-1">
           {product.sizes?.map((size) => (
             <button
@@ -110,7 +113,6 @@ const ProductItem = ({ product }: { product: Product }) => {
           ))}
         </div>
 
-        {/* Colors */}
         {product.colors && (
           <div className="mt-2 flex items-center space-x-1">
             {product.colors.map((color) => (
@@ -130,7 +132,6 @@ const ProductItem = ({ product }: { product: Product }) => {
           </div>
         )}
 
-        {/* Already in Cart Modal */}
         <AnimatePresence>
           {showAlready && (
             <motion.div
