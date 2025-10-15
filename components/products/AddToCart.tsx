@@ -6,12 +6,12 @@ import { ShoppingCart } from 'lucide-react';
 import useCartService from '@/lib/hooks/useCartStore';
 import { IOrderFinal } from '@/lib/models/orderFinalModel';
 
-type OrderItem = IOrderFinal['items'][0];
+type orderFinalModel = IOrderFinal['items'][0];
 
-const AddToCart = ({ item }: { item: OrderItem }) => {
+const AddToCart = ({ item }: { item: orderFinalModel }) => {
   const router = useRouter();
   const { items, increase, decrease } = useCartService();
-  const [existItem, setExistItem] = useState<OrderItem | undefined>();
+  const [existItem, setExistItem] = useState<orderFinalModel | undefined>();
 
   useEffect(() => {
     setExistItem(items.find((x) => x.slug === item.slug));

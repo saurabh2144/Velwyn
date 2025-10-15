@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-type OrderItem = {
+type orderFinalModel = {
   _id: string;
   name: string;
   image: string;

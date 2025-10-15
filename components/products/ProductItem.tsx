@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { Product } from '@/lib/models/ProductModel';
-import { OrderItem } from '@/lib/models/orderFinalModel';
+import { orderFinalModel } from '@/lib/models/orderFinalModel';
 import useCartService from '@/lib/hooks/useCartStore';
 import { Rating } from './Rating';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,7 +33,7 @@ const ProductItem = ({ product }: { product: Product }) => {
       // Item already in cart -> show popup
       setShowAlready(true);
     } else {
-      const newItem: OrderItem = {
+      const newItem: orderFinalModel = {
         slug: product.slug,
         name: product.name,
         image: product.image,
