@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ShoppingCart } from 'lucide-react'; // for icon
-
+import { ShoppingCart } from 'lucide-react';
 import useCartService from '@/lib/hooks/useCartStore';
-import { OrderItem } from '@/lib/models/orderFinalModel';
+import { IOrderFinal } from '@/lib/models/orderFinalModel';
+
+type OrderItem = IOrderFinal['items'][0];
 
 const AddToCart = ({ item }: { item: OrderItem }) => {
   const router = useRouter();
