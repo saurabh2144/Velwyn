@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 const MyOrderPage = () => {
   return (
     <div>
-     
       <MyOrders />
     </div>
   );
