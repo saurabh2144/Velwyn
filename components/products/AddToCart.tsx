@@ -18,7 +18,28 @@ const AddToCart = ({ item }: { item: orderFinalModel }) => {
   }, [item, items]);
 
   const addToCartHandler = () => {
-    increase(item);
+    // Ensure size and color are strings before passing
+    increase({
+      ...item,
+      size: item.size || 'M',
+      color: item.color || 'Default',
+    });
+  };
+
+  const handleIncrease = () => {
+    increase({
+      ...existItem!,
+      size: existItem!.size || 'M',
+      color: existItem!.color || 'Default',
+    });
+  };
+
+  const handleDecrease = () => {
+    decrease({
+      ...existItem!,
+      size: existItem!.size || 'M',
+      color: existItem!.color || 'Default',
+    });
   };
 
   if (existItem) {
@@ -33,7 +54,7 @@ const AddToCart = ({ item }: { item: orderFinalModel }) => {
           <button
             className="btn btn-sm"
             type="button"
-            onClick={() => decrease(existItem)}
+            onClick={handleDecrease}
           >
             -
           </button>
@@ -41,7 +62,7 @@ const AddToCart = ({ item }: { item: orderFinalModel }) => {
           <button
             className="btn btn-sm"
             type="button"
-            onClick={() => increase(existItem)}
+            onClick={handleIncrease}
           >
             +
           </button>
