@@ -60,64 +60,49 @@ const Form = () => {
   useEffect(() => setMounted(true), []);
   if (!mounted) return <>Loading...</>;
 
-  const handleCOD = async () => {
-    setShowConfirm(true);
-  };
+  const handleCOD = () => setShowConfirm(true);
 
-const Coddb = async () => {
-   setShowConfirm(false);
-                setPlacing(true);
-  if (!paymentMethod) {
-    toast.error('Please select a payment method');
-    return;
-  }
-
-  const data = {
-    paymentMethod,
-    shippingAddress,
-    items,
-    itemsPrice,
-    taxPrice,
-    shippingPrice,
-    totalPrice,
-  };
-
-  console.log('🟢 Sending Order Data:', data);
-
-  try {
- 
-
-    const res = await fetch('/api/orderfinal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    const result = await res.json();
-
-    if (result.success) {
-      toast.success('Order saved successfully!');
-      console.log('✅ Order Saved:', result.order);
-
-      // 🔹 Clear the appropriate store
-      if (buyNowItem) {
-        clearBuyNow();
-      } else {
-        clearCart();
-      }
-
-      // 🔹 Redirect to success page with order ID
-      router.push(`/order-success/${result.order._id}`);
-    } else {
-      toast.error('Failed to save order!');
+  const Coddb = async () => {
+    setShowConfirm(false);
+    setPlacing(true);
+    if (!paymentMethod) {
+      toast.error('Please select a payment method');
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    toast.error('Error while placing order');
-  } finally {
-    setPlacing(false);
-  }
-};
+
+    const data = {
+      paymentMethod,
+      shippingAddress,
+      items,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+    };
+
+    try {
+      const res = await fetch('/api/orderfinal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success('Order saved successfully!');
+        if (buyNowItem) clearBuyNow(); else clearCart();
+        router.push(`/order-success/${result.order._id}`);
+      } else {
+        toast.error('Failed to save order!');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error while placing order');
+    } finally {
+      setPlacing(false);
+    }
+  };
 
   const handleOnlinePayment = async () => {
     if (!paymentMethod) return toast.error('Select payment method');
@@ -146,11 +131,13 @@ const Coddb = async () => {
         name: 'Velwyn',
         description: 'Order Payment',
         order_id: data.order.id,
-        prefill: { name: shippingAddress.fullName, email: shippingAddress.email || '' },
+        prefill: { 
+          name: shippingAddress.fullName, 
+          email: '' // No email in shippingAddress, pass empty string
+        },
         handler: async (response: any) => {
           setPaymentResponse(response);
 
-          // verify payment & save order
           const verifyRes = await fetch('/api/verify-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -274,9 +261,7 @@ const Coddb = async () => {
             <h2 className="text-xl font-semibold mb-2">Confirm Your Order</h2>
             <p className="text-gray-600 mb-6">Are you sure you want to place this order on <b>Cash On Delivery</b>?</p>
             <div className="flex justify-center gap-4">
-              <button onClick={Coddb}
-             className="px-6 py-2 bg-green-600 text-white rounded-lg">Yes, Confirm</button>
-
+              <button onClick={Coddb} className="px-6 py-2 bg-green-600 text-white rounded-lg">Yes, Confirm</button>
               <button onClick={() => setShowConfirm(false)} className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg">Cancel</button>
             </div>
           </div>
