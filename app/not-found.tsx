@@ -8,6 +8,7 @@ const NotFoundPage = () => {
         <h1 className='mb-4 text-xl font-semibold'>404 - Page not found</h1>
         <Link href='/' className='btn'>
           Back Home
+          
         </Link>
       </div>
     </div>
