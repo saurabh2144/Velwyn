@@ -9,6 +9,8 @@ import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { Product } from '@/lib/models/ProductModel';
 import { formatId } from '@/lib/utils';
+import ImageKit from "imagekit";
+
 
 export default function ProductEditForm({ productId }: { productId: string }) {
   const { data: product, error } = useSWR(`/api/admin/products/${productId}`);
