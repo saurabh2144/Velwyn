@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -21,7 +21,12 @@ const Form = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [otpValue, setOtpValue] = useState('');
 
   let callbackUrl = params.get('callbackUrl') || '/';
 
@@ -29,21 +34,78 @@ const Form = () => {
     register,
     handleSubmit,
     getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<Inputs>({
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
+    formState: { errors },
+  } = useForm<Inputs>();
 
   useEffect(() => {
     if (session && session.user) {
       router.push(callbackUrl);
     }
   }, [callbackUrl, params, router, session]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  // Reset OTP digits when OTP screen opens
+  useEffect(() => {
+    if (otpSent) {
+      setOtpDigits(['', '', '', '', '', '']);
+      setOtpValue('');
+      // Focus first input after a small delay
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  }, [otpSent]);
+
+  // OTP input handlers
+  const handleOtpChange = (index: number, value: string) => {
+    if (/^\d?$/.test(value)) {
+      const newOtpDigits = [...otpDigits];
+      newOtpDigits[index] = value;
+      setOtpDigits(newOtpDigits);
+
+      // Update the OTP value
+      const newOtpValue = newOtpDigits.join('');
+      setOtpValue(newOtpValue);
+
+      // Auto-focus next input
+      if (value && index < 5) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text/plain').slice(0, 6);
+    if (/^\d+$/.test(pastedData)) {
+      const newOtp = pastedData.split('').slice(0, 6);
+      const filledOtp = [...newOtp, ...Array(6 - newOtp.length).fill('')];
+      setOtpDigits(filledOtp);
+      setOtpValue(newOtp.join(''));
+      
+      // Focus last filled input
+      const lastFilledIndex = Math.min(newOtp.length - 1, 5);
+      inputRefs.current[lastFilledIndex]?.focus();
+    }
+  };
+
+  // Fixed ref callback function
+  const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
+    inputRefs.current[index] = el;
+  };
 
   const formSubmit: SubmitHandler<Inputs> = async (form) => {
     setIsLoading(true);
@@ -62,11 +124,14 @@ const Form = () => {
         }),
       });
       
+      const data = await res.json();
+      
       if (res.ok) {
-        setVerificationSent(true);
-        toast.success('Verification email sent! Please check your inbox.');
+        setOtpSent(true);
+        setUserEmail(email);
+        setCountdown(600); // 10 minutes
+        toast.success('OTP sent to your email!');
       } else {
-        const data = await res.json();
         throw new Error(data.message);
       }
     } catch (err: any) {
@@ -80,106 +145,198 @@ const Form = () => {
     }
   };
 
-  // Resend verification email
-  const resendVerification = async () => {
-    const email = getValues('email');
-    if (!email) {
-      toast.error('Email is required');
+  const otpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Validate OTP
+    if (otpValue.length !== 6 || !/^\d+$/.test(otpValue)) {
+      toast.error('Please enter a valid 6-digit OTP');
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     try {
-      const res = await fetch('/api/resend-verification', {
+      const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email: userEmail,
+          otp: otpValue,
+        }),
       });
-
+      
+      const data = await res.json();
+      
       if (res.ok) {
-        toast.success('Verification email sent again!');
+        toast.success('Email verified successfully!');
+        router.push('/signin?success=Registration completed. Please login.');
       } else {
-        throw new Error('Failed to resend verification email');
+        throw new Error(data.message);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to resend email');
+      toast.error(err.message || 'OTP verification failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (verificationSent) {
+  const resendOTP = async () => {
+    if (countdown > 0) {
+      toast.error(`Please wait ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')} before resending OTP`);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setCountdown(600); // 10 minutes
+        toast.success('New OTP sent successfully!');
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // OTP Screen
+  if (otpSent) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto w-20 h-20 bg-green-500 rounded-2xl flex items-center justify-center mb-4">
-              <span className="text-2xl text-white">✉️</span>
+            <div className="mx-auto w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-2xl text-white">🔐</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h1>
-            <p className="text-gray-600">We've sent a verification link to your email</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Enter OTP</h1>
+            <p className="text-gray-600">We've sent a 6-digit OTP to your email</p>
+            <p className="text-sm text-gray-500 mt-1">{userEmail}</p>
           </div>
 
-          {/* Verification Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200 text-center">
-            <div className="mb-6">
-              <div className="text-green-500 text-6xl mb-4">✅</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Verification Email Sent</h3>
-              <p className="text-gray-600 mb-4">
-                Please check your inbox at <strong>{getValues('email')}</strong> and click the verification link to activate your account.
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Didn't receive the email? Check your spam folder or click below to resend.
-              </p>
-            </div>
+          {/* OTP Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <form onSubmit={otpSubmit} className="space-y-6">
+              {/* OTP Field - Completely clean inputs */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  6-Digit OTP
+                </label>
+                <div className="flex gap-2 justify-center mb-2">
+                  {otpDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={setInputRef(index)}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      onPaste={index === 0 ? handleOtpPaste : undefined}
+                      className="w-12 h-12 text-center text-2xl font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      placeholder="0"
+                      autoComplete="one-time-code"
+                    />
+                  ))}
+                </div>
+                
+                {/* Error Message */}
+                {otpValue.length > 0 && otpValue.length !== 6 && (
+                  <div className="mt-2 flex items-center justify-center text-red-600 text-sm">
+                    <span className="mr-1">⚠️</span>
+                    OTP must be 6 digits
+                  </div>
+                )}
+                
+                {/* Helper Text */}
+                <p className="mt-2 text-sm text-gray-500 text-center">
+                  Enter the 6-digit code sent to your email
+                </p>
+              </div>
 
-            <div className="space-y-4">
+              {/* Countdown Timer */}
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  OTP expires in: <span className="font-semibold text-red-600">
+                    {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
+                  </span>
+                </p>
+              </div>
+
+              {/* Submit Button */}
               <button
-                onClick={resendVerification}
-                disabled={isLoading}
+                type="submit"
+                disabled={isLoading || otpValue.length !== 6}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Sending...
+                    Verifying...
                   </>
                 ) : (
                   <>
-                    <span>🔄</span>
-                    Resend Verification Email
+                    <span>✅</span>
+                    Verify OTP
                   </>
                 )}
               </button>
 
+              {/* Resend OTP */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={resendOTP}
+                  disabled={countdown > 0 || isLoading}
+                  className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 font-medium transition-colors"
+                >
+                  {countdown > 0 ? `Resend OTP in ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}` : 'Resend OTP'}
+                </button>
+              </div>
+
+              {/* Back to Registration */}
               <button
-                onClick={() => setVerificationSent(false)}
+                type="button"
+                onClick={() => setOtpSent(false)}
                 className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl font-medium transition-all duration-200"
               >
                 ← Back to Registration
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-gray-600">
             <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <div className="text-blue-600 text-lg mb-2">🔒</div>
+              <div className="text-blue-600 text-lg mb-2">⏱️</div>
+              <h4 className="font-semibold text-gray-900">10 Min Expiry</h4>
+              <p>OTP expires quickly</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="text-green-600 text-lg mb-2">🔒</div>
               <h4 className="font-semibold text-gray-900">Secure</h4>
-              <p>Email verification required</p>
+              <p>One-time use</p>
             </div>
             <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <div className="text-green-600 text-lg mb-2">⚡</div>
-              <h4 className="font-semibold text-gray-900">Fast</h4>
-              <p>Quick verification</p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <div className="text-purple-600 text-lg mb-2">🎯</div>
-              <h4 className="font-semibold text-gray-900">Reliable</h4>
-              <p>Instant delivery</p>
+              <div className="text-purple-600 text-lg mb-2">📧</div>
+              <h4 className="font-semibold text-gray-900">Instant</h4>
+              <p>Quick delivery</p>
             </div>
           </div>
         </div>
@@ -187,6 +344,7 @@ const Form = () => {
     );
   }
 
+  // Original Registration Form (unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -259,7 +417,7 @@ const Form = () => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /[a-z0-9]+@[a-z]+\.[a-z]{2,3}/,
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                       message: 'Please enter a valid email address',
                     },
                   })}
@@ -387,13 +545,13 @@ const Form = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isLoading}
+              disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {(isSubmitting || isLoading) ? (
+              {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Creating account...
+                  Sending OTP...
                 </>
               ) : (
                 <>
@@ -442,7 +600,7 @@ const Form = () => {
           <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="text-blue-600 text-lg mb-2">🔒</div>
             <h4 className="font-semibold text-gray-900">Secure</h4>
-            <p>Email verification required</p>
+            <p>OTP verification</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="text-green-600 text-lg mb-2">⚡</div>
