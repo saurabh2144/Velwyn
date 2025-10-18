@@ -43,7 +43,9 @@ export const POST = async (request: NextRequest) => {
     // Final check if user already exists (race condition)
     const existingUser = await UserModel.findOne({ email, verified: true });
     if (existingUser) {
-    console.log("hi");
+   
+
+
       return Response.json(
         { message: 'User already exists with this email' },
         { status: 400 }
