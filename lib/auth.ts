@@ -28,6 +28,10 @@ export const config = {
             user.password,
           );
           if (isMatch) {
+            // Check if email is verified
+            if (!user.verified) {
+              throw new Error('EMAIL_NOT_VERIFIED');
+            }
             return user;
           }
         }
@@ -49,6 +53,7 @@ export const config = {
           email: user.email,
           name: user.name,
           isAdmin: user.isAdmin,
+          verified: user.verified,
         };
       }
       if (trigger === 'update' && session) {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 type Inputs = {
   email: string;
@@ -16,6 +17,7 @@ const Form = () => {
   const { data: session } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   let callbackUrl = params.get('callbackUrl') || '/';
   const router = useRouter();
@@ -23,6 +25,7 @@ const Form = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<Inputs>({
     defaultValues: {
@@ -30,6 +33,8 @@ const Form = () => {
       password: '',
     },
   });
+
+  const emailValue = watch('email');
 
   useEffect(() => {
     if (session && session.user) {
@@ -40,11 +45,58 @@ const Form = () => {
   const formSubmit: SubmitHandler<Inputs> = async (form) => {
     setIsLoading(true);
     const { email, password } = form;
-    await signIn('credentials', {
+    
+    // Store email in localStorage for potential resend verification
+    if (email) {
+      localStorage.setItem('signinEmail', email);
+    }
+    
+    const result = await signIn('credentials', {
       email,
       password,
+      redirect: false,
     });
+
+    if (result?.error) {
+      if (result.error === 'EMAIL_NOT_VERIFIED') {
+        toast.error('Please verify your email before logging in.');
+      } else {
+        toast.error('Invalid email or password');
+      }
+    }
+    
     setIsLoading(false);
+  };
+
+  const resendVerification = async () => {
+    const emailToResend = emailValue || localStorage.getItem('signinEmail');
+    
+    if (!emailToResend) {
+      toast.error('Please enter your email address first');
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: emailToResend }),
+      });
+
+      if (res.ok) {
+        toast.success('Verification email sent! Please check your inbox.');
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to resend verification email');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend verification email');
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   return (
@@ -71,8 +123,31 @@ const Form = () => {
                   <p className="text-red-600 text-sm">
                     {params.get('error') === 'CredentialsSignin'
                       ? 'Invalid email or password. Please try again.'
+                      : params.get('error') === 'EMAIL_NOT_VERIFIED'
+                      ? 'Please verify your email before logging in. Check your inbox for verification link.'
                       : params.get('error')}
                   </p>
+                  {params.get('error') === 'EMAIL_NOT_VERIFIED' && (
+                    <div className="mt-3">
+                      <button
+                        onClick={resendVerification}
+                        disabled={resendLoading}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                      >
+                        {resendLoading ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <span>🔄</span>
+                            Resend verification email
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

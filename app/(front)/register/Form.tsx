@@ -21,6 +21,7 @@ const Form = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   let callbackUrl = params.get('callbackUrl') || '/';
 
@@ -60,10 +61,10 @@ const Form = () => {
           password,
         }),
       });
+      
       if (res.ok) {
-        return router.push(
-          `/signin?callbackUrl=${callbackUrl}&success=Account has been created`,
-        );
+        setVerificationSent(true);
+        toast.success('Verification email sent! Please check your inbox.');
       } else {
         const data = await res.json();
         throw new Error(data.message);
@@ -71,13 +72,120 @@ const Form = () => {
     } catch (err: any) {
       const error =
         err.message && err.message.indexOf('E11000') === 0
-          ? 'Email is duplicate'
+          ? 'Email is already registered'
           : err.message;
-      toast.error(error || 'error');
+      toast.error(error || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Resend verification email
+  const resendVerification = async () => {
+    const email = getValues('email');
+    if (!email) {
+      toast.error('Email is required');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok) {
+        toast.success('Verification email sent again!');
+      } else {
+        throw new Error('Failed to resend verification email');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (verificationSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          {/* Header */}
+          <div className="text-center">
+            <div className="mx-auto w-20 h-20 bg-green-500 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-2xl text-white">✉️</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h1>
+            <p className="text-gray-600">We've sent a verification link to your email</p>
+          </div>
+
+          {/* Verification Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200 text-center">
+            <div className="mb-6">
+              <div className="text-green-500 text-6xl mb-4">✅</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Verification Email Sent</h3>
+              <p className="text-gray-600 mb-4">
+                Please check your inbox at <strong>{getValues('email')}</strong> and click the verification link to activate your account.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Didn't receive the email? Check your spam folder or click below to resend.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={resendVerification}
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <span>🔄</span>
+                    Resend Verification Email
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setVerificationSent(false)}
+                className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl font-medium transition-all duration-200"
+              >
+                ← Back to Registration
+              </button>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-gray-600">
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="text-blue-600 text-lg mb-2">🔒</div>
+              <h4 className="font-semibold text-gray-900">Secure</h4>
+              <p>Email verification required</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="text-green-600 text-lg mb-2">⚡</div>
+              <h4 className="font-semibold text-gray-900">Fast</h4>
+              <p>Quick verification</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="text-purple-600 text-lg mb-2">🎯</div>
+              <h4 className="font-semibold text-gray-900">Reliable</h4>
+              <p>Instant delivery</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
@@ -185,6 +293,10 @@ const Form = () => {
                   id="password"
                   {...register('password', {
                     required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters',
+                    },
                   })}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all ${
                     errors.password 
@@ -252,6 +364,26 @@ const Form = () => {
               )}
             </div>
 
+            {/* Terms Agreement */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="terms"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                required
+              />
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                I agree to the{' '}
+                <Link href="/terms" className="text-blue-600 hover:text-blue-700">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="text-blue-600 hover:text-blue-700">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -310,7 +442,7 @@ const Form = () => {
           <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="text-blue-600 text-lg mb-2">🔒</div>
             <h4 className="font-semibold text-gray-900">Secure</h4>
-            <p>Your data is protected</p>
+            <p>Email verification required</p>
           </div>
           <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="text-green-600 text-lg mb-2">⚡</div>

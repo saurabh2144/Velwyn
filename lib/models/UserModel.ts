@@ -5,6 +5,9 @@ export type User = {
   name: string;
   email: string;
   isAdmin: boolean;
+  verified: boolean;
+  verificationToken?: string;
+  verificationExpires?: Date;
 };
 
 const UserSchema = new mongoose.Schema(
@@ -22,10 +25,31 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isAdmin: { type: Boolean, required: true, default: false },
+    isAdmin: { 
+      type: Boolean, 
+      required: true, 
+      default: false 
+    },
+    verified: { 
+      type: Boolean, 
+      default: false 
+    },
+    verificationToken: { 
+      type: String 
+    },
+    verificationExpires: { 
+      type: Date 
+    },
   },
-  { timestamps: true },
+  { 
+    timestamps: true 
+  },
 );
+
+// Add indexes for better performance
+UserSchema.index({ verificationToken: 1 });
+UserSchema.index({ verificationExpires: 1 }, { expireAfterSeconds: 0 });
+UserSchema.index({ email: 1 }, { unique: true });
 
 const UserModel = mongoose.models?.User || mongoose.model('User', UserSchema);
 
