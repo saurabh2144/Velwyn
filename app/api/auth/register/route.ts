@@ -55,7 +55,7 @@ export const POST = async (request: NextRequest) => {
 
     // Send OTP email
     const { error } = await resend.emails.send({
-      from: 'Velwyn <noreply@velwyn.in>',
+     from: 'Resend <onboarding@resend.dev>',
       to: [email],
       subject: `Your Verification OTP - Velwyn`,
       html: `
