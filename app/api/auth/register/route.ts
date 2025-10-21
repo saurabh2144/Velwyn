@@ -55,8 +55,12 @@ export const POST = async (request: NextRequest) => {
 
     // Send OTP email
     const { error } = await resend.emails.send({
-     from: 'Resend <onboarding@resend.dev>',
+  from: 'Velwyn Team <contact@velwyn.in>',
+
+
       to: [email],
+
+
       subject: `Your Verification OTP - Velwyn`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -67,7 +71,7 @@ export const POST = async (request: NextRequest) => {
           <p style="font-size: 16px; color: #374151;">Hello <strong>${name}</strong>,</p>
           
           <p style="font-size: 16px; color: #374151;">
-            Thank you for registering with Velwyn <h1 style="font-size: 18px; color: #0c0c0cff;">Where Luxury Meets Value </h1>Use the OTP below to verify your email address:
+            Thank you for registering with Velwyn  Use the OTP below to verify your email address:
           </p>
           
           <div style="text-align: center; margin: 40px 0;">
