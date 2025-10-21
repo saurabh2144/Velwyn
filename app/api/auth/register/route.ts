@@ -6,7 +6,8 @@ import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/lib/models/UserModel';
 import { otpService } from '@/lib/otpService';
 
-const resend = new Resend('re_JXabpADx_27LcdDATnJGyU3hSoqFPUEo7');
+
+const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export const POST = async (request: NextRequest) => {
   const { name, email, password } = await request.json();
