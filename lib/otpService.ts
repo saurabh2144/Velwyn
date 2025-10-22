@@ -10,7 +10,10 @@ class MongoDBOTPService {
     return otp;
   }
 
-  async storeOTP(email: string, userData: { name: string; email: string; password: string }): Promise<{ success: boolean; otp?: string; message?: string }> {
+  async storeOTP(
+    email: string,
+    userData: { name: string; email: string; password: string }
+  ): Promise<{ success: boolean; otp?: string; message?: string }> {
     try {
       console.log('📦 Storing OTP for:', email);
       await OTPSchema.deleteOne({ email });
@@ -23,7 +26,7 @@ class MongoDBOTPService {
         otp,
         userData,
         expiresAt,
-        attempts: 0
+        attempts: 0,
       });
 
       console.log('✅ OTP stored in database for:', email, 'OTP:', otp);
@@ -34,7 +37,10 @@ class MongoDBOTPService {
     }
   }
 
-  async verifyOTP(email: string, enteredOTP: string): Promise<{ success: boolean; message: string; userData?: any }> {
+  async verifyOTP(
+    email: string,
+    enteredOTP: string
+  ): Promise<{ success: boolean; message: string; userData?: any }> {
     try {
       console.log('🔍 Verifying OTP for:', email);
       const otpRecord = await OTPSchema.findOne({ email });
@@ -54,9 +60,10 @@ class MongoDBOTPService {
         otpRecord.attempts += 1;
         await otpRecord.save();
         const remainingAttempts = this.MAX_ATTEMPTS - otpRecord.attempts;
-        const message = remainingAttempts > 0 
-          ? `Invalid OTP. ${remainingAttempts} attempts remaining.` 
-          : 'Too many failed attempts. Please request a new OTP.';
+        const message =
+          remainingAttempts > 0
+            ? `Invalid OTP. ${remainingAttempts} attempts remaining.`
+            : 'Too many failed attempts. Please request a new OTP.';
         return { success: false, message };
       }
 
@@ -70,7 +77,9 @@ class MongoDBOTPService {
     }
   }
 
-  async resendOTP(email: string): Promise<{ success: boolean; otp?: string; message?: string }> {
+  async resendOTP(
+    email: string
+  ): Promise<{ success: boolean; otp?: string; message?: string }> {
     try {
       console.log('🔄 Resending OTP for:', email);
       let otpRecord = await OTPSchema.findOne({ email });
@@ -86,7 +95,7 @@ class MongoDBOTPService {
           otp: newOTP,
           attempts: 0,
           expiresAt: newExpiresAt,
-          userData: {} // optional: attach user info if available
+          userData: {},
         });
 
         console.log('✅ New OTP generated for resend:', newOTP);
@@ -108,13 +117,29 @@ class MongoDBOTPService {
     }
   }
 
+  // ✅ Newly added function to fix the build error
+  async getRemainingAttempts(email: string): Promise<number> {
+    try {
+      const otpRecord = await OTPSchema.findOne({ email });
+      if (!otpRecord) return this.MAX_ATTEMPTS;
+      return this.MAX_ATTEMPTS - otpRecord.attempts;
+    } catch (error) {
+      console.error('❌ Error getting remaining attempts:', error);
+      return this.MAX_ATTEMPTS;
+    }
+  }
+
   // Debug: see all OTPs in DB
   async debugOTPStorage() {
     try {
       const allOTPs = await OTPSchema.find({});
       console.log('🐛 OTP Storage Debug - Total entries:', allOTPs.length);
-      allOTPs.forEach(otp => {
-        console.log(`📧 ${otp.email}:`, { otp: otp.otp, expiresAt: otp.expiresAt, attempts: otp.attempts });
+      allOTPs.forEach((otp) => {
+        console.log(`📧 ${otp.email}:`, {
+          otp: otp.otp,
+          expiresAt: otp.expiresAt,
+          attempts: otp.attempts,
+        });
       });
     } catch (error) {
       console.error('❌ Error debugging OTP storage:', error);
