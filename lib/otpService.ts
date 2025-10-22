@@ -13,19 +13,17 @@ class MongoDBOTPService {
   async storeOTP(email: string, userData: { name: string; email: string; password: string }): Promise<{ success: boolean; otp?: string; message?: string }> {
     try {
       console.log('📦 Storing OTP for:', email);
-      
-      // Delete existing OTP for this email
       await OTPSchema.deleteOne({ email });
-      
+
       const otp = this.generateOTP();
       const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MS);
 
-      // Create new OTP in database
       await OTPSchema.create({
         email,
         otp,
         userData,
-        expiresAt
+        expiresAt,
+        attempts: 0
       });
 
       console.log('✅ OTP stored in database for:', email, 'OTP:', otp);
@@ -39,112 +37,84 @@ class MongoDBOTPService {
   async verifyOTP(email: string, enteredOTP: string): Promise<{ success: boolean; message: string; userData?: any }> {
     try {
       console.log('🔍 Verifying OTP for:', email);
-      console.log('📨 Entered OTP:', enteredOTP);
-      
       const otpRecord = await OTPSchema.findOne({ email });
-      
-      console.log('📂 Found OTP record:', otpRecord);
-
-      if (!otpRecord) {
-        console.log('❌ OTP not found for:', email);
-        return { success: false, message: 'OTP not found or expired' };
-      }
+      if (!otpRecord) return { success: false, message: 'OTP not found or expired' };
 
       if (otpRecord.expiresAt < new Date()) {
-        console.log('❌ OTP expired for:', email);
         await OTPSchema.deleteOne({ email });
         return { success: false, message: 'OTP has expired' };
       }
 
       if (otpRecord.attempts >= this.MAX_ATTEMPTS) {
-        console.log('❌ Too many attempts for:', email);
         await OTPSchema.deleteOne({ email });
         return { success: false, message: 'Too many failed attempts. Please request a new OTP.' };
       }
 
-      console.log('🔐 Comparing OTPs - Stored:', otpRecord.otp, 'Entered:', enteredOTP);
-      
       if (otpRecord.otp !== enteredOTP) {
         otpRecord.attempts += 1;
         await otpRecord.save();
-        
-        console.log('❌ Invalid OTP. Attempt:', otpRecord.attempts);
-        
         const remainingAttempts = this.MAX_ATTEMPTS - otpRecord.attempts;
         const message = remainingAttempts > 0 
-          ? `Invalid OTP. ${remainingAttempts} attempts remaining.`
+          ? `Invalid OTP. ${remainingAttempts} attempts remaining.` 
           : 'Too many failed attempts. Please request a new OTP.';
-
         return { success: false, message };
       }
 
-      // OTP verified successfully
-      console.log('✅ OTP verified successfully for:', email);
       const userData = otpRecord.userData;
       await OTPSchema.deleteOne({ email });
-      
-      return { 
-        success: true, 
-        message: 'OTP verified successfully',
-        userData 
-      };
+      console.log('✅ OTP verified successfully for:', email);
+      return { success: true, message: 'OTP verified successfully', userData };
     } catch (error) {
       console.error('❌ Error verifying OTP:', error);
       return { success: false, message: 'Internal server error during OTP verification' };
     }
   }
 
-  async getRemainingAttempts(email: string): Promise<number> {
-    try {
-      const otpRecord = await OTPSchema.findOne({ email });
-      if (!otpRecord) return 0;
-      return this.MAX_ATTEMPTS - otpRecord.attempts;
-    } catch (error) {
-      return 0;
-    }
-  }
-
   async resendOTP(email: string): Promise<{ success: boolean; otp?: string; message?: string }> {
     try {
       console.log('🔄 Resending OTP for:', email);
-      
-      const otpRecord = await OTPSchema.findOne({ email });
-      
+      let otpRecord = await OTPSchema.findOne({ email });
+
+      // If OTP not found, create a new one automatically
       if (!otpRecord) {
-        console.log('❌ No OTP found to resend for:', email);
-        return { success: false, message: 'No pending registration found. Please register again.' };
+        console.log('⚠️ No OTP found. Creating a new one for resend.');
+        const newOTP = this.generateOTP();
+        const newExpiresAt = new Date(Date.now() + this.OTP_EXPIRY_MS);
+
+        await OTPSchema.create({
+          email,
+          otp: newOTP,
+          attempts: 0,
+          expiresAt: newExpiresAt,
+          userData: {} // optional: attach user info if available
+        });
+
+        console.log('✅ New OTP generated for resend:', newOTP);
+        return { success: true, otp: newOTP, message: 'New OTP generated successfully.' };
       }
 
+      // OTP exists, refresh it
       const newOTP = this.generateOTP();
-      const newExpiresAt = new Date(Date.now() + this.OTP_EXPIRY_MS);
-      
-      // Update OTP and reset attempts
       otpRecord.otp = newOTP;
-      otpRecord.expiresAt = newExpiresAt;
+      otpRecord.expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MS);
       otpRecord.attempts = 0;
-      
       await otpRecord.save();
 
-      console.log('✅ New OTP generated for resend:', newOTP);
-      return { success: true, otp: newOTP };
+      console.log('✅ Existing OTP refreshed for resend:', newOTP);
+      return { success: true, otp: newOTP, message: 'OTP resent successfully.' };
     } catch (error) {
       console.error('❌ Error resending OTP:', error);
       return { success: false, message: 'Failed to resend OTP' };
     }
   }
 
-  // Debug method to see all stored OTPs
+  // Debug: see all OTPs in DB
   async debugOTPStorage() {
     try {
       const allOTPs = await OTPSchema.find({});
-      console.log('🐛 OTP Storage Debug:');
-      console.log('Total entries:', allOTPs.length);
+      console.log('🐛 OTP Storage Debug - Total entries:', allOTPs.length);
       allOTPs.forEach(otp => {
-        console.log(`📧 ${otp.email}:`, {
-          otp: otp.otp,
-          expiresAt: otp.expiresAt,
-          attempts: otp.attempts
-        });
+        console.log(`📧 ${otp.email}:`, { otp: otp.otp, expiresAt: otp.expiresAt, attempts: otp.attempts });
       });
     } catch (error) {
       console.error('❌ Error debugging OTP storage:', error);

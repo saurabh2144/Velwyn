@@ -1,6 +1,7 @@
+import { otpService } from '@/lib/otpService';
 import { NextRequest } from 'next/server';
 import { Resend } from 'resend';
-import { otpService } from '@/lib/otpService';
+
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
