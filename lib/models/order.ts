@@ -1,4 +1,4 @@
-// models/Order.ts
+// models/Order.ts (full updated model)
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema({
@@ -38,11 +38,25 @@ const orderSchema = new mongoose.Schema(
     paymentAmount: { type: Number },
     paymentDate: { type: Date },
     paymentFrom: { type: String },
+    deliveryStatus: {
+      type: String,
+      enum: ['pending', 'on_the_way', 'delivered', 'cancelled'],
+      default: 'pending',
+    },
+    expectedDeliveryDate: { type: Date },
   },
   {
-    timestamps: true, // createdAt aur updatedAt auto handle karega
-    collection: 'orderfinals' // ← Yeh sabse important line! Collection name set kar diya
+    timestamps: true,
+    collection: 'orderfinals',
   }
 );
+
+// Automatically set expectedDeliveryDate for new orders (5 days after creation)
+orderSchema.pre('save', function (next) {
+  if (this.isNew && !this.expectedDeliveryDate) {
+    this.expectedDeliveryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days baad
+  }
+  next();
+});
 
 export default mongoose.models.Order || mongoose.model('Order', orderSchema);

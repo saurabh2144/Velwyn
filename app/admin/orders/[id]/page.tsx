@@ -1,9 +1,49 @@
 // app/admin/orders/[id]/page.tsx
-// @ts-nocheck
+// @ts-nocheck   ← Yeh line daal de – errors gayab!
+
 import dbConnect from '@/lib/dbConnect';
 import Order from '@/lib/models/order';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+
+// Server Action: Mark as On the Way
+async function markAsOnTheWay(orderId) {
+  await dbConnect();
+  const updatedOrder = await Order.findByIdAndUpdate(
+    orderId,
+    {
+      $set: {
+        deliveryStatus: 'on_the_way',
+        updatedAt: new Date(),
+      },
+    },
+    { new: true }
+  ).lean();
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  return updatedOrder;
+}
+
+// Server Action: Mark as Delivered
+async function markAsDelivered(orderId) {
+  await dbConnect();
+  const updatedOrder = await Order.findByIdAndUpdate(
+    orderId,
+    {
+      $set: {
+        deliveryStatus: 'delivered',
+        isDelivered: true,
+        deliveredAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+    { new: true }
+  ).lean();
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  return updatedOrder;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -16,14 +56,72 @@ export default async function OrderDetailPage({ params }) {
     notFound();
   }
 
+  // Expected Delivery Date (5 days after order creation if not set)
+  const expectedDeliveryDate = order.expectedDeliveryDate
+    ? new Date(order.expectedDeliveryDate)
+    : new Date(order.createdAt ? new Date(order.createdAt).getTime() + 5 * 24 * 60 * 60 * 1000 : Date.now());
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8">
         Order Details - #{order._id.toString().slice(-8)}
       </h1>
 
+      {/* Status Controls */}
+      <div className="mb-8 bg-white p-6 rounded-lg shadow border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">Update Order Status</h2>
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="text-lg">
+            Current Delivery Status: <strong className="capitalize">{order.deliveryStatus || 'pending'}</strong>
+          </div>
+
+          {order.deliveryStatus === 'delivered' ? (
+            <span className="bg-green-100 text-green-800 px-4 py-2 rounded-full font-medium">
+              Delivered on {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN') : ''}
+            </span>
+          ) : (
+            <>
+              {order.deliveryStatus !== 'on_the_way' && (
+                <form action={markAsOnTheWay.bind(null, params.id)}>
+                  <button
+                    type="submit"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-md font-medium transition"
+                  >
+                    Mark as On the Way
+                  </button>
+                </form>
+              )}
+
+              <form action={markAsDelivered.bind(null, params.id)}>
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium transition"
+                >
+                  Mark as Delivered
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+
+        {/* Expected Delivery Date */}
+        <div className="mt-4">
+          <p className="text-gray-700">
+            <strong>Expected Delivery Date:</strong>{' '}
+            {expectedDeliveryDate.toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            (Auto-calculated as 5 days after order creation)
+          </p>
+        </div>
+      </div>
+
+      {/* Customer & Order Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Customer & Order Info */}
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
           <p><strong>Name:</strong> {order.userId?.name || 'Guest'}</p>
@@ -49,16 +147,6 @@ export default async function OrderDetailPage({ params }) {
               }`}
             >
               {order.paid ? 'Paid' : 'Pending'}
-            </span>
-          </p>
-          <p className="mt-2">
-            <strong>Delivery Status:</strong>{' '}
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                order.isDelivered ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}
-            >
-              {order.isDelivered ? 'Delivered' : 'Not Delivered'}
             </span>
           </p>
         </div>
