@@ -1,11 +1,11 @@
 // app/admin/orders/[id]/page.tsx
-// @ts-nocheck  // Yeh line rakh lena agar TS errors aa rahe hain
+// @ts-nocheck
 
 import dbConnect from '@/lib/dbConnect';
 import Order from '@/lib/models/order';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { markAsOnTheWay, markAsDelivered } from '@/app/actions/orderActions';  // ← Yeh import add kar
+import { markAsOnTheWay, markAsDelivered } from '@/app/actions/orderActions'; // Yeh import zaroori
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export default async function OrderDetailPage({ params }) {
     notFound();
   }
 
-  // Expected Delivery Date (5 days after order creation if not set)
+  // Expected Delivery Date (UI ke liye)
   const expectedDeliveryDate = order.expectedDeliveryDate
     ? new Date(order.expectedDeliveryDate)
     : new Date(order.createdAt ? new Date(order.createdAt).getTime() + 5 * 24 * 60 * 60 * 1000 : Date.now());
@@ -69,11 +69,13 @@ export default async function OrderDetailPage({ params }) {
         <div className="mt-4">
           <p className="text-gray-700">
             <strong>Expected Delivery Date:</strong>{' '}
-            {expectedDeliveryDate.toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            })}
+            {order.expectedDeliveryDate
+              ? new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })
+              : 'Not set (will set automatically when marked On the Way)'}
           </p>
           <p className="text-sm text-gray-500 mt-1">
             (Auto-calculated as 5 days after order creation)
