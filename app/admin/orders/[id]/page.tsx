@@ -1,5 +1,5 @@
 // app/admin/orders/[id]/page.tsx
-// @ts-nocheck   ← Yeh line daal de – errors gayab!
+// @ts-nocheck
 
 import dbConnect from '@/lib/dbConnect';
 import Order from '@/lib/models/order';
@@ -67,7 +67,7 @@ export default async function OrderDetailPage({ params }) {
         Order Details - #{order._id.toString().slice(-8)}
       </h1>
 
-      {/* Status Controls */}
+      {/* Status Update Section */}
       <div className="mb-8 bg-white p-6 rounded-lg shadow border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">Update Order Status</h2>
         <div className="flex flex-wrap gap-4 items-center">
@@ -104,7 +104,6 @@ export default async function OrderDetailPage({ params }) {
           )}
         </div>
 
-        {/* Expected Delivery Date */}
         <div className="mt-4">
           <p className="text-gray-700">
             <strong>Expected Delivery Date:</strong>{' '}
