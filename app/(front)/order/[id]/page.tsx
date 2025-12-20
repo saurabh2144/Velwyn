@@ -41,6 +41,7 @@ export default function OrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showContactPopup, setShowContactPopup] = useState(false);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -149,7 +150,7 @@ export default function OrderPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
@@ -271,6 +272,48 @@ export default function OrderPage() {
           </div>
         </div>
       </div>
+
+      {/* Fixed Contact Customer Care Button */}
+      <button
+        onClick={() => setShowContactPopup(true)}
+        className="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 z-50 transition-all duration-300 transform hover:scale-105"
+      >
+        <span className="text-2xl">📞</span>
+        <span className="font-semibold">Contact Customer Care</span>
+      </button>
+
+      {/* Contact Popup */}
+      {showContactPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative">
+            <button
+              onClick={() => setShowContactPopup(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+            >
+              ×
+            </button>
+
+            <div className="text-center">
+              <div className="text-5xl mb-6">📧</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Contact Customer Care
+              </h3>
+              <p className="text-gray-700 mb-6">
+                Email us at: <br />
+                <a
+                  href="mailto:contact.velwyn@gmail.com"
+                  className="text-indigo-600 font-medium hover:underline break-all"
+                >
+                  contact.velwyn@gmail.com
+                </a>
+              </p>
+              <p className="text-gray-600">
+                Our agent will respond to you soon if you email us your problem.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
