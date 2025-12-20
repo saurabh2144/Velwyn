@@ -36,7 +36,7 @@ export default async function HomePage() {
           </h1>
         </div>
         <div className='flex-1 text-lg md:text-xl text-gray-700'>
-          <span className='font-semibold'>Velwyn</span> – Lucknow’s premier destination for stylish, high-quality clothing, curated with love by Rohit. Experience fashion that speaks your style.
+          <span className='font-semibold'>Velwyn</span>- creates premium unisex casuals that blend minimal design with luxurious comfort. Designed in India, made for everyday elegance.
         </div>
       </div>
 
