@@ -1,49 +1,11 @@
 // app/admin/orders/[id]/page.tsx
-// @ts-nocheck
+// @ts-nocheck  // Yeh line rakh lena agar TS errors aa rahe hain
 
 import dbConnect from '@/lib/dbConnect';
 import Order from '@/lib/models/order';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
-
-// Server Action: Mark as On the Way
-async function markAsOnTheWay(orderId) {
-  await dbConnect();
-  const updatedOrder = await Order.findByIdAndUpdate(
-    orderId,
-    {
-      $set: {
-        deliveryStatus: 'on_the_way',
-        updatedAt: new Date(),
-      },
-    },
-    { new: true }
-  ).lean();
-  revalidatePath('/admin/orders');
-  revalidatePath(`/admin/orders/${orderId}`);
-  return updatedOrder;
-}
-
-// Server Action: Mark as Delivered
-async function markAsDelivered(orderId) {
-  await dbConnect();
-  const updatedOrder = await Order.findByIdAndUpdate(
-    orderId,
-    {
-      $set: {
-        deliveryStatus: 'delivered',
-        isDelivered: true,
-        deliveredAt: new Date(),
-        updatedAt: new Date(),
-      },
-    },
-    { new: true }
-  ).lean();
-  revalidatePath('/admin/orders');
-  revalidatePath(`/admin/orders/${orderId}`);
-  return updatedOrder;
-}
+import { markAsOnTheWay, markAsDelivered } from '@/app/actions/orderActions';  // ← Yeh import add kar
 
 export const dynamic = 'force-dynamic';
 
