@@ -29,6 +29,8 @@ type Order = {
     country: string;
   };
   items: OrderItem[];
+  deliveryStatus?: string;
+  expectedDeliveryDate?: string;
   [key: string]: any;
 };
 
@@ -45,6 +47,7 @@ export default function OrderPage() {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
         const data = await res.json();
+        console.log('Fetched order data:', data);
         if (data.success) setOrder(data.order);
         else setError(data.message || 'Order not found');
       } catch {
@@ -103,25 +106,45 @@ export default function OrderPage() {
     label,
     date,
   }: {
-    status: boolean;
+    status: boolean | string;
     label: string;
     date?: string;
   }) => (
     <div
       className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
-        status
+        typeof status === 'boolean'
+          ? status
+            ? 'bg-green-100 text-green-800 border border-green-200'
+            : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+          : status === 'delivered'
           ? 'bg-green-100 text-green-800 border border-green-200'
+          : status === 'on_the_way'
+          ? 'bg-blue-100 text-blue-800 border border-blue-200'
           : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
       }`}
     >
       <span
         className={`w-2 h-2 rounded-full mr-2 ${
-          status ? 'bg-green-500' : 'bg-yellow-500'
+          typeof status === 'boolean'
+            ? status
+              ? 'bg-green-500'
+              : 'bg-yellow-500'
+            : status === 'delivered'
+            ? 'bg-green-500'
+            : status === 'on_the_way'
+            ? 'bg-blue-500'
+            : 'bg-yellow-500'
         }`}
       ></span>
-      {status
-        ? `${label} • ${date ? new Date(date).toLocaleDateString() : ''}`
-        : `Pending ${label}`}
+      {typeof status === 'boolean'
+        ? status
+          ? `${label} • ${date ? new Date(date).toLocaleDateString() : ''}`
+          : `Pending ${label}`
+        : status === 'delivered'
+        ? `Delivered • ${date ? new Date(date).toLocaleDateString() : ''}`
+        : status === 'on_the_way'
+        ? 'On the Way'
+        : status || 'Pending'}
     </div>
   );
 
@@ -153,13 +176,37 @@ export default function OrderPage() {
                 date={order.paidAt}
               />
               <StatusBadge
-                status={order.isDelivered}
-                label="Delivered"
+                status={order.deliveryStatus || order.isDelivered}
+                label="Delivery"
                 date={order.deliveredAt}
               />
             </div>
           </div>
         </div>
+
+        {/* Expected Delivery Date */}
+        {order.expectedDeliveryDate && (
+          <div className="mb-8 bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-purple-100 p-4 rounded-xl">
+                <span className="text-3xl">🚚</span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Expected Delivery Date
+                </h3>
+                <p className="text-gray-600 text-lg mt-1">
+                  {new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Items Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
